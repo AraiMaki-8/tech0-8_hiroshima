@@ -42,6 +42,15 @@ def get_data(period, tickers):
         df = pd.concat([df, hist])
     return df
 
+
+# チャートに表示する範囲をスライドで表示し、それぞれをymin, ymaxに代入
+st.sidebar.write("株価の範囲指定") # サイドバーに表示
+ymin, ymax = st.sidebar.slider(
+    '範囲を指定してください。',
+    0.0, 5000.0, (0.0, 5000.0)
+) # サイドバーに表示
+
+
 df = get_data(selected_period, tickers)
 
 companies = st.multiselect(
@@ -50,18 +59,17 @@ companies = st.multiselect(
     ['google', 'apple','TOYOTA'],
 )
 
-data = df.loc[companies]
-data = data.T.reset_index()
 
+data = df.loc[companies] # 取得したデータから抽出するための配列で絞ってdataに代入
+st.write("株価 ", data.sort_index()) # dataにあるindexを表示
+data = data.T.reset_index() # dataを抽出して転置
+
+# 企業ごとの別々のカラムにデータを表示する必要ないので企業を１つのカラムに統一
 data = pd.melt(data, id_vars=['Date']).rename(
     columns={'value': 'Stock Prices'}
 )
 
-ymin, ymax = st.slider(
-    '範囲を指定してください。',
-    0.0, 5000.0, (0.0, 5000.0)
-)
-
+# dataとスライドバーで設定した最大最小値を元にalt.Chartを使って株価チャートを作成
 chart = (
     alt.Chart(data)
     .mark_line(opacity=0.8, clip=True)
@@ -72,4 +80,5 @@ chart = (
     )
 )
 
+# 作成したチャートをstreamlitで表示
 st.altair_chart(chart, use_container_width=True)
